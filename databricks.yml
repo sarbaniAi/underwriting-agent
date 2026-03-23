@@ -1,0 +1,68 @@
+bundle:
+  name: underwriting_agent
+
+# ── CUSTOMER: change these defaults to match your workspace ──────────────────
+variables:
+  catalog:
+    default: "serverless_stable_tcrn2v_catalog"   # CHANGE: your UC catalog
+  schema:
+    default: "underwriting_demo"
+  warehouse_id:
+    default: "91dbe14a27ddabad"                    # CHANGE: your SQL warehouse ID
+  genie_space_id:
+    default: "01f125d0813316d8adac3002ca0f0658"    # CHANGE: after running demo/install.sh
+
+resources:
+  apps:
+    underwriting_agent:
+      name: "underwriting-agent"
+      description: "India retail life insurance underwriting assistant (multi-agent)"
+      source_code_path: ./
+      config:
+        command: ["uvicorn", "agent_server.start_server:app", "--host", "0.0.0.0", "--port", "8000"]
+        env:
+          - name: MLFLOW_TRACKING_URI
+            value: "databricks"
+          - name: MLFLOW_REGISTRY_URI
+            value: "databricks-uc"
+          - name: MLFLOW_EXPERIMENT_ID
+            value_from: "experiment"
+          - name: UC_CATALOG
+            value: ${var.catalog}
+          - name: UC_SCHEMA
+            value: ${var.schema}
+          - name: DATABRICKS_WAREHOUSE_ID
+            value: ${var.warehouse_id}
+          - name: GENIE_SPACE_ID
+            value: ${var.genie_space_id}
+          - name: VS_INDEX
+            value: "${var.catalog}.${var.schema}.rag_idx"
+
+      resources:
+        - name: "experiment"
+          experiment:
+            experiment_id: ""                       # CHANGE: your MLflow experiment ID
+            permission: "CAN_MANAGE"
+
+        - name: "genie_space"
+          genie_space:
+            name: "India Underwriter (demo)"
+            space_id: ${var.genie_space_id}
+            permission: "CAN_RUN"
+
+# ── CUSTOMER: change workspace host to your workspace URL ────────────────────
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://your-workspace.cloud.databricks.com  # CHANGE
+
+  prod:
+    mode: production
+    workspace:
+      host: https://your-workspace.cloud.databricks.com  # CHANGE
+    resources:
+      apps:
+        underwriting_agent:
+          name: underwriting-agent
