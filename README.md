@@ -36,9 +36,59 @@ The app includes a **full underwriting workflow UI** with:
 
 ---
 
-## Quick Start (3 steps)
+## Quick Start
 
-### Step 1: Configure `.env`
+### Step 0: Get the repo onto your machine
+
+**Option A — Git clone (recommended)**
+```bash
+git clone https://github.com/sarbaniAi/underwriting-agent.git
+cd underwriting-agent
+```
+
+**Option B — Download ZIP (no git required)**
+1. Go to https://github.com/sarbaniAi/underwriting-agent
+2. Click the green **Code** button > **Download ZIP**
+3. Unzip and `cd underwriting-agent-main`
+
+**Option C — Databricks Repos (run entirely from workspace)**
+1. In your Databricks workspace, go to **Workspace > Repos**
+2. Click **Add Repo**
+3. Paste URL: `https://github.com/sarbaniAi/underwriting-agent.git`
+4. Click **Create Repo**
+5. Open a terminal in the workspace: **Clusters > your cluster > Web Terminal**, or use a notebook with `%sh`
+
+**Option D — Databricks CLI import (upload from local to workspace)**
+```bash
+# First clone locally, then push to workspace
+git clone https://github.com/sarbaniAi/underwriting-agent.git
+databricks workspace import-dir ./underwriting-agent /Workspace/Users/<your-email>/underwriting-agent --profile <your-profile> --overwrite
+```
+
+### Step 1: Set up Databricks CLI authentication
+
+If you don't have the Databricks CLI installed:
+```bash
+# macOS
+brew install databricks
+
+# or pip
+pip install databricks-cli
+
+# or see: https://docs.databricks.com/dev-tools/cli/install.html
+```
+
+Create an authenticated profile:
+```bash
+databricks auth login --host https://<your-workspace>.cloud.databricks.com --profile my-profile
+```
+
+Verify it works:
+```bash
+databricks auth describe --profile my-profile
+```
+
+### Step 2: Configure `.env`
 
 ```bash
 cp .env.example .env
@@ -62,7 +112,7 @@ ORCHESTRATOR_MODEL=databricks-claude-sonnet-4-5
 MLFLOW_EXPERIMENT_ID=                      # filled by install or quickstart
 ```
 
-### Step 2: Run the install script
+### Step 3: Run the install script
 
 ```bash
 cd demo
@@ -76,7 +126,7 @@ This creates:
 - Genie space
 - Deploys the Databricks App
 
-### Step 3: Grant permissions + set up Vector Search
+### Step 4: Grant permissions + set up Vector Search
 
 ```bash
 # After the app is deployed, grant its service principal access:
