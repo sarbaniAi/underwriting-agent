@@ -1,0 +1,19 @@
+command: ["uvicorn", "agent_server.start_server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+env:
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: MLFLOW_REGISTRY_URI
+    value: "databricks-uc"
+  - name: UC_CATALOG
+    value: "my_catalog"                    # CHANGE: your UC catalog
+  - name: UC_SCHEMA
+    value: "underwriting_demo"
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "your-warehouse-id"             # CHANGE: your SQL warehouse ID
+  - name: GENIE_SPACE_ID
+    value: ""                              # CHANGE: set after running demo/install.sh
+  - name: VS_INDEX
+    value: "my_catalog.underwriting_demo.rag_idx"  # CHANGE: catalog.schema.rag_idx
+  - name: ORCHESTRATOR_MODEL
+    value: "databricks-claude-sonnet-4-5"  # CHANGE: any FMAPI model
