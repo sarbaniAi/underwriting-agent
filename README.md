@@ -1,6 +1,6 @@
-# India Underwriting Agent — Multi-Agent Demo on Databricks
+# Underwriting Agent — Multi-Agent Demo on Databricks
 
-A production-ready demonstration of an AI-assisted underwriting workflow for India retail life insurance, built on Databricks using the **OpenAI Agents SDK multi-agent** template from [databricks/app-templates](https://github.com/databricks/app-templates).
+A production-ready demonstration of an AI-assisted underwriting workflow for retail life insurance, built on Databricks using the **OpenAI Agents SDK multi-agent** template from [databricks/app-templates](https://github.com/databricks/app-templates).
 
 ## What It Does
 
