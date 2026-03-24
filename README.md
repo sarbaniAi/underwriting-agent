@@ -148,8 +148,15 @@ Before running install, verify all of these:
 - [ ] `databricks.yml` — `variables.warehouse_id.default` matches your `.env` `DATABRICKS_SQL_WAREHOUSE_ID`
 - [ ] `databricks.yml` — `targets.dev.workspace.host` is your workspace URL
 - [ ] `databricks.yml` — `targets.prod.workspace.host` is your workspace URL
+- [ ] `databricks.yml` — `experiment_id` is set (install.sh now auto-creates this, but if it fails, create manually — see below)
 - [ ] CLI auth works: `databricks auth describe --profile <your-profile>` shows your workspace host
 - [ ] SQL warehouse is **running** (not stopped/paused)
+
+> **Note:** `install.sh` now auto-creates the MLflow experiment and sets the `experiment_id` in `databricks.yml`. If it fails, create manually:
+> ```bash
+> databricks experiments create-experiment "/Users/<your-email>/underwriting-agent" --profile <your-profile>
+> ```
+> Then paste the returned `experiment_id` into `databricks.yml` under `resources.apps.underwriting_agent.resources[0].experiment.experiment_id`.
 
 ### Step 3: Run the install script
 

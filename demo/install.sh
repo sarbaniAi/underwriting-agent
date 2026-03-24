@@ -89,13 +89,38 @@ if [ -f genie_space_id.txt ]; then
 fi
 echo ""
 
-# Step 6: Deploy app
-echo "Step 6: Deploying Databricks App..."
+# Step 6: Create MLflow experiment + update databricks.yml
+echo "Step 6: Creating MLflow experiment..."
 cd "$PROJECT_DIR"
+USER_EMAIL=$(databricks auth describe --profile "$PROFILE" 2>&1 | grep "User:" | awk '{print $2}')
+EXP_PATH="/Users/${USER_EMAIL}/underwriting-agent"
+EXP_RESULT=$(databricks experiments create-experiment "$EXP_PATH" --profile "$PROFILE" 2>&1 || true)
+EXP_ID=$(echo "$EXP_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('experiment_id',''))" 2>/dev/null || echo "")
+
+if [ -z "$EXP_ID" ]; then
+    # Experiment may already exist — try to get by name
+    EXP_ID=$(databricks experiments get-by-name "$EXP_PATH" --profile "$PROFILE" 2>&1 | python3 -c "import sys,json; print(json.load(sys.stdin).get('experiment',{}).get('experiment_id',''))" 2>/dev/null || echo "")
+fi
+
+if [ -n "$EXP_ID" ]; then
+    echo "  MLflow experiment ID: $EXP_ID"
+    # Update databricks.yml with experiment ID
+    sed -i.bak "s/experiment_id: \"[^\"]*\"/experiment_id: \"$EXP_ID\"/" "$PROJECT_DIR/databricks.yml"
+    # Update .env
+    if grep -q "^MLFLOW_EXPERIMENT_ID=" "$PROJECT_DIR/.env"; then
+        sed -i.bak "s/^MLFLOW_EXPERIMENT_ID=.*/MLFLOW_EXPERIMENT_ID=$EXP_ID/" "$PROJECT_DIR/.env"
+    fi
+else
+    echo "  WARNING: Could not create/find MLflow experiment. You may need to set experiment_id manually in databricks.yml"
+fi
+echo ""
+
+# Step 7: Deploy app
+echo "Step 7: Deploying Databricks App..."
 DATABRICKS_CONFIG_PROFILE="$PROFILE" databricks bundle deploy
 echo ""
 
-echo "Step 7: Starting app..."
+echo "Step 8: Starting app..."
 DATABRICKS_CONFIG_PROFILE="$PROFILE" databricks bundle run underwriting_agent
 echo ""
 
