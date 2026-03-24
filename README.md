@@ -170,7 +170,26 @@ This creates:
 - 3 UC functions (max sum assured, risk tier, ULIP smoker block)
 - RAG chunks table with knowledge docs
 - Genie space
-- Deploys the Databricks App
+- MLflow experiment (auto-created)
+- Deploys the Databricks App via DAB (`databricks bundle deploy`)
+
+> **Troubleshooting: App creation fails with "permission" error**
+>
+> On some workspaces (Free Edition, restricted entitlements), DAB's terraform provider
+> cannot create apps. In that case, create and deploy the app manually:
+> ```bash
+> # 1. Create the app
+> databricks apps create underwriting-agent --profile <your-profile>
+>
+> # 2. Wait for it to show ACTIVE, then deploy source code
+> databricks apps deploy underwriting-agent \
+>   --source-code-path /Workspace/Users/<your-email>/.bundle/underwriting_agent/dev/files \
+>   --profile <your-profile>
+> ```
+> The repo includes an `app.yaml` file with the command and env vars for this manual flow.
+> Edit `app.yaml` with your catalog, warehouse ID, and Genie space ID before deploying.
+>
+> **On production-grade workspaces (Enterprise, Premium), `install.sh` handles this automatically — no manual steps needed.**
 
 ### Step 4: Grant permissions + set up Vector Search
 
