@@ -17,5 +17,7 @@ env:
     value: "my_catalog.underwriting_demo.rag_idx"  # CHANGE: catalog.schema.rag_idx
   - name: ORCHESTRATOR_MODEL
     value: "databricks-claude-sonnet-4-5"  # CHANGE: any FMAPI model
+  - name: MLFLOW_EXPERIMENT_ID
+    value: ""                              # CHANGE: set after running demo/install.sh
   - name: COMPANY_NAME
     value: "India Life"                    # CHANGE: your company name
