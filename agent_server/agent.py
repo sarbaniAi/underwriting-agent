@@ -52,6 +52,7 @@ GENIE_SPACE_ID = os.environ.get("GENIE_SPACE_ID", "01f125d0813316d8adac3002ca0f0
 VS_INDEX = os.environ.get("VS_INDEX", f"{CATALOG}.{SCHEMA}.rag_idx")
 WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "91dbe14a27ddabad")
 MODEL = os.environ.get("ORCHESTRATOR_MODEL", "databricks-claude-sonnet-4-5")
+COMPANY_NAME = os.environ.get("COMPANY_NAME", "India Life")
 
 # ---------------------------------------------------------------------------
 # Client setup
@@ -182,7 +183,7 @@ async def init_genie_mcp():
     return McpServer(
         url=build_mcp_url(f"/api/2.0/mcp/genie/{GENIE_SPACE_ID}"),
         name=(
-            "Query the India Underwriter Genie space for structured data: "
+            f"Query the {COMPANY_NAME} Underwriter Genie space for structured data: "
             "applicant profiles, application details, underwriting decisions, "
             "product catalogue, reason codes, and underwriting limits. "
             "Use for any question about specific applicants, applications, "
@@ -195,8 +196,8 @@ async def init_genie_mcp():
 # Orchestrator agent
 # ---------------------------------------------------------------------------
 
-ORCHESTRATOR_INSTRUCTIONS = """\
-You are an India retail life insurance underwriting assistant.
+ORCHESTRATOR_INSTRUCTIONS = f"""\
+You are a {COMPANY_NAME} retail life insurance underwriting assistant.
 You help analysts and underwriters explore applications, rules, and policy context
 using company data and documents. You do NOT make binding underwriting decisions.
 

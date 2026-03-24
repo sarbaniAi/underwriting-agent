@@ -98,7 +98,7 @@ You must edit **two files** before running the install. Use the checklist below.
 cp .env.example .env
 ```
 
-Open `.env` in any editor and set these 4 values:
+Open `.env` in any editor and set these values:
 
 | Line | What to change | Where to find it |
 |------|----------------|------------------|
@@ -106,6 +106,7 @@ Open `.env` in any editor and set these 4 values:
 | `UC_CATALOG=` | Your Unity Catalog catalog name | Workspace UI > **Catalog** > pick your catalog |
 | `UC_SCHEMA=` | Schema name (default `underwriting_demo` is fine) | Will be created if it doesn't exist |
 | `DATABRICKS_SQL_WAREHOUSE_ID=` | Your SQL warehouse ID | Workspace UI > **SQL Warehouses** > your warehouse > **Connection Details** > last segment of the **HTTP Path** |
+| `COMPANY_NAME=` | Your company name (shown in UI sidebar + agent prompt) | e.g. `HDFC Life`, `ICICI Prudential`, `Max Life` |
 
 Example `.env` after editing:
 ```env
@@ -113,6 +114,7 @@ DATABRICKS_CONFIG_PROFILE=my-profile
 UC_CATALOG=my_catalog
 UC_SCHEMA=underwriting_demo
 DATABRICKS_SQL_WAREHOUSE_ID=665b042918235846
+COMPANY_NAME=HDFC Life
 
 # Leave these blank — install.sh fills them automatically
 GENIE_SPACE_ID=
@@ -226,6 +228,7 @@ bash demo/grant_permissions.sh
 | **VS endpoint** | `.env` | `VS_ENDPOINT=<your-vs-endpoint-name>` (if different) |
 | **VS index** | `.env` | `VS_INDEX=<catalog>.<schema>.rag_idx` |
 | **Model** | `.env` | `ORCHESTRATOR_MODEL=<model-name>` (any FMAPI model) |
+| **Company name** | `.env` + `app.yaml` + `databricks.yml` | `COMPANY_NAME=<your-company>` (shown in sidebar + agent prompt) |
 
 Everything else works out of the box with the provided synthetic data.
 

@@ -11,6 +11,8 @@ variables:
     default: "91dbe14a27ddabad"                    # CHANGE: your SQL warehouse ID
   genie_space_id:
     default: "01f125d0813316d8adac3002ca0f0658"    # CHANGE: after running demo/install.sh
+  company_name:
+    default: "India Life"                          # CHANGE: your company name
 
 resources:
   apps:
@@ -37,6 +39,8 @@ resources:
             value: ${var.genie_space_id}
           - name: VS_INDEX
             value: "${var.catalog}.${var.schema}.rag_idx"
+          - name: COMPANY_NAME
+            value: ${var.company_name}
 
       resources:
         - name: "experiment"

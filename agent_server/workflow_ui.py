@@ -105,7 +105,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="sidebar">
   <div class="brand">
     <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a56db"/><path d="M12 28V12h6l4 8 4-8h6v16h-5V19l-3.5 7h-3L17 19v9h-5z" fill="#fff"/></svg>
-    <h2><span>India Life</span><br/>Underwriting</h2>
+    <h2><span id="brand-name">Underwriting</span><br/>Agent</h2>
   </div>
   <nav>
     <div class="section">Underwriting Workflow</div>
@@ -350,8 +350,17 @@ function showView(v){
   event.target.classList.add('active');
 }
 
-// Load applicants on start
+// Load company name + applicants on start
 async function init(){
+  // Fetch company name
+  try{
+    const cr=await fetch('/api/config');
+    const cc=await cr.json();
+    if(cc.company_name){
+      document.getElementById('brand-name').textContent=cc.company_name;
+      document.title=cc.company_name+' — Underwriting Workspace';
+    }
+  }catch(e){}
   const r=await fetch('/api/applicants');
   const d=await r.json();
   const sel=document.getElementById('sel-applicant');

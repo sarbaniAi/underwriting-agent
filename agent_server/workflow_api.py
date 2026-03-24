@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api")
 CATALOG = os.environ.get("UC_CATALOG", "serverless_stable_tcrn2v_catalog")
 SCHEMA = os.environ.get("UC_SCHEMA", "underwriting_demo")
 WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "91dbe14a27ddabad")
+COMPANY_NAME = os.environ.get("COMPANY_NAME", "India Life")
 
 _ws = WorkspaceClient()
 
@@ -40,6 +41,13 @@ def _esc(v: str) -> str:
     if v is None:
         return "NULL"
     return v.replace("\\", "\\\\").replace("'", "\\'")
+
+
+# ── App config (company name etc) ──────────────────────────────────────────
+
+@router.get("/config")
+def get_config():
+    return {"company_name": COMPANY_NAME}
 
 
 # ── List applicants (for dropdown) ──────────────────────────────────────────
