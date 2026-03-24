@@ -12,7 +12,10 @@ import agent_server.agent  # noqa: E402
 agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=False)
 # Define the app as a module level variable to enable multiple workers
 app = agent_server.app  # noqa: F841
-setup_mlflow_git_based_version_tracking()
+try:
+    setup_mlflow_git_based_version_tracking()
+except Exception:
+    pass  # Not a git repo in deployed app — safe to skip
 
 # ---------------------------------------------------------------------------
 # Mount workflow API + UI
