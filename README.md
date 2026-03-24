@@ -88,29 +88,68 @@ Verify it works:
 databricks auth describe --profile my-profile
 ```
 
-### Step 2: Configure `.env`
+### Step 2: Configure BOTH files before running install
+
+You must edit **two files** before running the install. Use the checklist below.
+
+#### File 1: `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your workspace values:
+Open `.env` in any editor and set these 4 values:
 
+| Line | What to change | Where to find it |
+|------|----------------|------------------|
+| `DATABRICKS_CONFIG_PROFILE=` | Your CLI profile name (from Step 1) | The `--profile` name you used in `databricks auth login` |
+| `UC_CATALOG=` | Your Unity Catalog catalog name | Workspace UI > **Catalog** > pick your catalog |
+| `UC_SCHEMA=` | Schema name (default `underwriting_demo` is fine) | Will be created if it doesn't exist |
+| `DATABRICKS_SQL_WAREHOUSE_ID=` | Your SQL warehouse ID | Workspace UI > **SQL Warehouses** > your warehouse > **Connection Details** > last segment of the **HTTP Path** |
+
+Example `.env` after editing:
 ```env
-# REQUIRED — change these
-DATABRICKS_CONFIG_PROFILE=my-profile      # your CLI profile name
-UC_CATALOG=my_catalog                      # your Unity Catalog catalog
-UC_SCHEMA=underwriting_demo                # schema name (will be created)
-DATABRICKS_SQL_WAREHOUSE_ID=abc123def456   # your SQL warehouse ID
+DATABRICKS_CONFIG_PROFILE=my-profile
+UC_CATALOG=my_catalog
+UC_SCHEMA=underwriting_demo
+DATABRICKS_SQL_WAREHOUSE_ID=665b042918235846
 
-# Set after Step 2 completes
-GENIE_SPACE_ID=                            # filled automatically by install
+# Leave these blank — install.sh fills them automatically
+GENIE_SPACE_ID=
+MLFLOW_EXPERIMENT_ID=
 VS_INDEX=my_catalog.underwriting_demo.rag_idx
 
-# Optional — defaults work
+# Optional — change the model if desired
 ORCHESTRATOR_MODEL=databricks-claude-sonnet-4-5
-MLFLOW_EXPERIMENT_ID=                      # filled by install or quickstart
 ```
+
+#### File 2: `databricks.yml`
+
+Open `databricks.yml` and change **3 things**:
+
+| Line | What to change | Example |
+|------|----------------|---------|
+| `variables.catalog.default` | Same catalog as `.env` | `"my_catalog"` |
+| `variables.warehouse_id.default` | Same warehouse ID as `.env` | `"665b042918235846"` |
+| `targets.dev.workspace.host` | Your workspace URL | `https://dbc-ef54f790-f71c.cloud.databricks.com` |
+| `targets.prod.workspace.host` | Same workspace URL (or prod workspace) | `https://dbc-ef54f790-f71c.cloud.databricks.com` |
+
+Look for lines marked with `# CHANGE` — those are the ones to update.
+
+#### Pre-flight checklist
+
+Before running install, verify all of these:
+
+- [ ] `.env` — `DATABRICKS_CONFIG_PROFILE` is set to your profile name (NOT `DEFAULT` unless that's your actual profile)
+- [ ] `.env` — `UC_CATALOG` matches an existing catalog in your workspace (check in Catalog Explorer)
+- [ ] `.env` — `UC_SCHEMA` is set (default `underwriting_demo` is fine — it will be created)
+- [ ] `.env` — `DATABRICKS_SQL_WAREHOUSE_ID` is correct (from SQL Warehouses > Connection Details > HTTP Path)
+- [ ] `databricks.yml` — `variables.catalog.default` matches your `.env` `UC_CATALOG`
+- [ ] `databricks.yml` — `variables.warehouse_id.default` matches your `.env` `DATABRICKS_SQL_WAREHOUSE_ID`
+- [ ] `databricks.yml` — `targets.dev.workspace.host` is your workspace URL
+- [ ] `databricks.yml` — `targets.prod.workspace.host` is your workspace URL
+- [ ] CLI auth works: `databricks auth describe --profile <your-profile>` shows your workspace host
+- [ ] SQL warehouse is **running** (not stopped/paused)
 
 ### Step 3: Run the install script
 
