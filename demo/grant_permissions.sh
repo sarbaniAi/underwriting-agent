@@ -50,6 +50,29 @@ databricks api patch "/api/2.0/permissions/warehouses/$WAREHOUSE" --json "{
 }" --profile "$PROFILE" 2>&1 | python3 -c "import sys,json; d=json.load(sys.stdin); print('  Warehouse:', 'OK' if 'access_control_list' in d else d)" 2>&1
 
 echo ""
+echo "Granting Genie space permission..."
+GENIE_ID=$(grep "^GENIE_SPACE_ID=" "$PROJECT_DIR/.env" | cut -d= -f2 | tr -d '[:space:]')
+if [ -n "$GENIE_ID" ]; then
+    databricks api patch "/api/2.0/permissions/genie/$GENIE_ID" --json "{
+        \"access_control_list\": [{\"service_principal_name\": \"$SP\", \"permission_level\": \"CAN_RUN\"}]
+    }" --profile "$PROFILE" 2>&1 | python3 -c "import sys,json; d=json.load(sys.stdin); print('  Genie:', 'OK' if 'access_control_list' in d else d)" 2>&1
+else
+    echo "  GENIE_SPACE_ID not set in .env — skipping"
+fi
+
+echo ""
+echo "Granting MLflow experiment permission..."
+EXP_ID=$(grep "^MLFLOW_EXPERIMENT_ID=" "$PROJECT_DIR/.env" | cut -d= -f2 | tr -d '[:space:]')
+if [ -n "$EXP_ID" ]; then
+    databricks api patch "/api/2.0/permissions/experiments/$EXP_ID" --json "{
+        \"access_control_list\": [{\"service_principal_name\": \"$SP\", \"permission_level\": \"CAN_MANAGE\"}]
+    }" --profile "$PROFILE" 2>&1 | python3 -c "import sys,json; d=json.load(sys.stdin); print('  Experiment:', 'OK' if 'access_control_list' in d else d)" 2>&1
+else
+    echo "  MLFLOW_EXPERIMENT_ID not set in .env — skipping"
+fi
+
+echo ""
 echo "All permissions granted."
+echo ""
 echo "If Vector Search is set up, also grant the VS endpoint permission:"
 echo "  databricks api patch /api/2.0/permissions/serving-endpoints/<VS_ENDPOINT_NAME> --json '{\"access_control_list\": [{\"service_principal_name\": \"$SP\", \"permission_level\": \"CAN_QUERY\"}]}' --profile $PROFILE"
