@@ -1,16 +1,16 @@
 # Underwriting Agent — Multi-Agent Demo on Databricks
 
-A production-ready demonstration of an AI-assisted underwriting workflow for retail life insurance, built on Databricks using the **OpenAI Agents SDK multi-agent** template from [databricks/app-templates](https://github.com/databricks/app-templates).
+AI-assisted underwriting workflow for retail life insurance, built on Databricks using the **OpenAI Agents SDK**.
 
 ## What It Does
 
-An orchestrator agent routes underwriting queries to the right backend:
+An orchestrator agent routes underwriting queries to 3 backends:
 
 | Tool | Backend | Use Case |
 |------|---------|----------|
 | **Genie MCP** | Databricks Genie space | Structured data: applicants, applications, decisions, products, limits |
 | **UC Functions** | Unity Catalog SQL functions | Governed rules: max sum assured, risk tier, ULIP smoker block |
-| **Vector Search** | RAG over `rag_chunks` index | Policy documents, underwriting manuals, guidelines |
+| **Vector Search** | RAG over knowledge docs | Policy documents, underwriting manuals, guidelines |
 
 The app includes a **full underwriting workflow UI** with:
 - Applicant & application browser
@@ -21,144 +21,54 @@ The app includes a **full underwriting workflow UI** with:
 
 ---
 
-## Prerequisites (Customer Workspace)
+## Installation — 5 Steps
 
-| Requirement | Details |
-|-------------|---------|
-| **Databricks workspace** | Any cloud (AWS / Azure / GCP) with Unity Catalog enabled |
-| **Databricks CLI** | v0.200+ installed locally. [Install guide](https://docs.databricks.com/dev-tools/cli/install.html) |
-| **CLI profile** | Authenticated profile. Run: `databricks auth login --host <workspace-url> --profile my-profile` |
-| **Catalog + Schema** | A UC catalog and schema you can create tables in. The install script creates all tables. |
-| **SQL Warehouse** | A running SQL warehouse (serverless or classic). Note the warehouse ID. |
-| **Python 3.11+** | For running install scripts and local dev |
-| **uv** (optional) | For local development. [Install](https://docs.astral.sh/uv/getting-started/installation/) |
-| **Vector Search** (manual) | A VS endpoint + DELTA_SYNC index over `rag_chunks`. See Step 4 below. |
+### Prerequisites
 
----
+- [Databricks CLI](https://docs.databricks.com/dev-tools/cli/install.html) v0.200+ installed
+- Python 3.11+
+- A Databricks workspace with Unity Catalog and a running SQL warehouse
 
-## Quick Start
+### Step 1: Clone and configure
 
-### Step 0: Get the repo onto your machine
-
-**Option A — Git clone (recommended)**
 ```bash
 git clone https://github.com/sarbaniAi/underwriting-agent.git
 cd underwriting-agent
 ```
 
-**Option B — Download ZIP (no git required)**
-1. Go to https://github.com/sarbaniAi/underwriting-agent
-2. Click the green **Code** button > **Download ZIP**
-3. Unzip and `cd underwriting-agent-main`
-
-**Option C — Databricks Repos (run entirely from workspace)**
-1. In your Databricks workspace, go to **Workspace > Repos**
-2. Click **Add Repo**
-3. Paste URL: `https://github.com/sarbaniAi/underwriting-agent.git`
-4. Click **Create Repo**
-5. Open a terminal in the workspace: **Clusters > your cluster > Web Terminal**, or use a notebook with `%sh`
-
-**Option D — Databricks CLI import (upload from local to workspace)**
+Set up Databricks CLI authentication:
 ```bash
-# First clone locally, then push to workspace
-git clone https://github.com/sarbaniAi/underwriting-agent.git
-databricks workspace import-dir ./underwriting-agent /Workspace/Users/<your-email>/underwriting-agent --profile <your-profile> --overwrite
+databricks auth login --host https://<your-workspace-url> --profile my-profile
 ```
 
-### Step 1: Set up Databricks CLI authentication
-
-If you don't have the Databricks CLI installed:
-```bash
-# macOS
-brew install databricks
-
-# or pip
-pip install databricks-cli
-
-# or see: https://docs.databricks.com/dev-tools/cli/install.html
-```
-
-Create an authenticated profile:
-```bash
-databricks auth login --host https://<your-workspace>.cloud.databricks.com --profile my-profile
-```
-
-Verify it works:
-```bash
-databricks auth describe --profile my-profile
-```
-
-### Step 2: Configure BOTH files before running install
-
-You must edit **two files** before running the install. Use the checklist below.
-
-#### File 1: `.env`
-
+Create your config file:
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` in any editor and set these values:
+Edit `.env` — fill in these 4 values:
 
-| Line | What to change | Where to find it |
-|------|----------------|------------------|
-| `DATABRICKS_CONFIG_PROFILE=` | Your CLI profile name (from Step 1) | The `--profile` name you used in `databricks auth login` |
-| `UC_CATALOG=` | Your Unity Catalog catalog name | Workspace UI > **Catalog** > pick your catalog |
-| `UC_SCHEMA=` | Schema name (default `underwriting_demo` is fine) | Will be created if it doesn't exist |
-| `DATABRICKS_SQL_WAREHOUSE_ID=` | Your SQL warehouse ID | Workspace UI > **SQL Warehouses** > your warehouse > **Connection Details** > last segment of the **HTTP Path** |
-| `COMPANY_NAME=` | Your company name (shown in UI sidebar + agent prompt) | e.g. `HDFC Life`, `ICICI Prudential`, `Max Life` |
+| Variable | Where to find it |
+|----------|-----------------|
+| `DATABRICKS_CONFIG_PROFILE` | The profile name from `databricks auth login` (e.g., `my-profile`) |
+| `UC_CATALOG` | Your Unity Catalog catalog name (Workspace UI → Catalog) |
+| `DATABRICKS_SQL_WAREHOUSE_ID` | SQL Warehouses → your warehouse → Connection Details → last segment of HTTP Path |
+| `COMPANY_NAME` | Your company name (shown in the UI) |
 
-Example `.env` after editing:
-```env
-DATABRICKS_CONFIG_PROFILE=my-profile
-UC_CATALOG=my_catalog
-UC_SCHEMA=underwriting_demo
-DATABRICKS_SQL_WAREHOUSE_ID=665b042918235846
-COMPANY_NAME=HDFC Life
+Leave `GENIE_SPACE_ID` and `MLFLOW_EXPERIMENT_ID` blank — the install script fills them.
 
-# Leave these blank — install.sh fills them automatically
-GENIE_SPACE_ID=
-MLFLOW_EXPERIMENT_ID=
-VS_INDEX=my_catalog.underwriting_demo.rag_idx
+### Step 2: Edit databricks.yml
 
-# Optional — change the model if desired
-ORCHESTRATOR_MODEL=databricks-claude-sonnet-4-5
-```
+Open `databricks.yml` and update lines marked `# CHANGE`:
 
-#### File 2: `databricks.yml`
-
-Open `databricks.yml` and change **3 things**:
-
-| Line | What to change | Example |
-|------|----------------|---------|
-| `variables.catalog.default` | Same catalog as `.env` | `"my_catalog"` |
-| `variables.warehouse_id.default` | Same warehouse ID as `.env` | `"665b042918235846"` |
-| `targets.dev.workspace.host` | Your workspace URL | `https://dbc-ef54f790-f71c.cloud.databricks.com` |
-| `targets.prod.workspace.host` | Same workspace URL (or prod workspace) | `https://dbc-ef54f790-f71c.cloud.databricks.com` |
-
-Look for lines marked with `# CHANGE` — those are the ones to update.
-
-#### Pre-flight checklist
-
-Before running install, verify all of these:
-
-- [ ] `.env` — `DATABRICKS_CONFIG_PROFILE` is set to your profile name (NOT `DEFAULT` unless that's your actual profile)
-- [ ] `.env` — `UC_CATALOG` matches an existing catalog in your workspace (check in Catalog Explorer)
-- [ ] `.env` — `UC_SCHEMA` is set (default `underwriting_demo` is fine — it will be created)
-- [ ] `.env` — `DATABRICKS_SQL_WAREHOUSE_ID` is correct (from SQL Warehouses > Connection Details > HTTP Path)
-- [ ] `databricks.yml` — `variables.catalog.default` matches your `.env` `UC_CATALOG`
-- [ ] `databricks.yml` — `variables.warehouse_id.default` matches your `.env` `DATABRICKS_SQL_WAREHOUSE_ID`
-- [ ] `databricks.yml` — `targets.dev.workspace.host` is your workspace URL
-- [ ] `databricks.yml` — `targets.prod.workspace.host` is your workspace URL
-- [ ] `databricks.yml` — `experiment_id` is set (install.sh now auto-creates this, but if it fails, create manually — see below)
-- [ ] CLI auth works: `databricks auth describe --profile <your-profile>` shows your workspace host
-- [ ] SQL warehouse is **running** (not stopped/paused)
-
-> **Note:** `install.sh` now auto-creates the MLflow experiment and sets the `experiment_id` in `databricks.yml`. If it fails, create manually:
-> ```bash
-> databricks experiments create-experiment "/Users/<your-email>/underwriting-agent" --profile <your-profile>
-> ```
-> Then paste the returned `experiment_id` into `databricks.yml` under `resources.apps.underwriting_agent.resources[0].experiment.experiment_id`.
+| Line | What to set |
+|------|------------|
+| `variables.catalog.default` | Same as `UC_CATALOG` in `.env` |
+| `variables.warehouse_id.default` | Same as `DATABRICKS_SQL_WAREHOUSE_ID` in `.env` |
+| `resources.apps.underwriting_agent.name` | Your app name (e.g., `underwriting-agent`) |
+| `ORCHESTRATOR_MODEL` value | Any Databricks FMAPI model (e.g., `databricks-claude-sonnet-4-5`, `databricks-meta-llama-3-3-70b-instruct`) |
+| `targets.dev.workspace.host` | Your workspace URL |
+| `targets.prod.workspace.host` | Your workspace URL |
 
 ### Step 3: Run the install script
 
@@ -167,121 +77,92 @@ cd demo
 bash install.sh
 ```
 
-This creates:
-- 7 Delta tables (products, applicants, applications, decisions, reason codes, limits, workspace)
-- 3 UC functions (max sum assured, risk tier, ULIP smoker block)
-- RAG chunks table with knowledge docs
-- Genie space
-- MLflow experiment (auto-created)
-- Deploys the Databricks App via DAB (`databricks bundle deploy`)
+This automatically creates:
+1. 7 Delta tables with synthetic seed data
+2. 3 UC functions (business rules)
+3. RAG chunks table with knowledge documents
+4. Knowledge docs uploaded to UC Volume
+5. Genie space (auto-populates `GENIE_SPACE_ID` in `.env`)
+6. MLflow experiment (auto-populates `experiment_id` in `databricks.yml`)
+7. Deploys the Databricks App
 
-> **Troubleshooting: App creation fails with "permission" error**
->
-> On some workspaces (Free Edition, restricted entitlements), DAB's terraform provider
-> cannot create apps. In that case, create and deploy the app manually:
-> ```bash
-> # 1. Create the app
-> databricks apps create underwriting-agent --profile <your-profile>
->
-> # 2. Wait for it to show ACTIVE, then deploy source code
-> databricks apps deploy underwriting-agent \
->   --source-code-path /Workspace/Users/<your-email>/.bundle/underwriting_agent/dev/files \
->   --profile <your-profile>
-> ```
-> The repo includes an `app.yaml` file with the command and env vars for this manual flow.
-> Edit `app.yaml` with your catalog, warehouse ID, and Genie space ID before deploying.
->
-> **On production-grade workspaces (Enterprise, Premium), `install.sh` handles this automatically — no manual steps needed.**
+### Step 4: Create Vector Search index
 
-### Step 4: Grant permissions + set up Vector Search
+This is the only manual step (one-time):
+
+1. Go to **Compute → Vector Search** in your workspace
+2. **Create endpoint**: `underwriter_vs_endpoint` (if one doesn't exist)
+3. **Create index**:
+   - Name: `<your-catalog>.underwriting_demo.rag_idx`
+   - Source table: `<your-catalog>.underwriting_demo.rag_chunks`
+   - Primary key: `chunk_id`
+   - Sync mode: **DELTA_SYNC** (triggered)
+   - Embedding model: `databricks-gte-large-en`
+   - Column to embed: `content`
+4. Wait for the index to show **ONLINE** status
+
+### Step 5: Grant permissions
 
 ```bash
-# After the app is deployed, grant its service principal access:
 bash demo/grant_permissions.sh
 ```
 
-**Vector Search** (manual — one-time):
-1. Go to **Compute > Vector Search** in your workspace
-2. Create endpoint: `underwriter_vs_endpoint` (or your preferred name)
-3. Create index:
-   - Name: `<catalog>.<schema>.rag_idx`
-   - Source table: `<catalog>.<schema>.rag_chunks`
-   - Sync mode: **DELTA_SYNC** (triggered)
-   - Embedding model: `databricks-gte-large-en`
-   - Columns to embed: `content`
-   - Metadata columns: `source_path`
-4. Update `VS_INDEX` in `.env` if you used a different name
-5. Grant the app's service principal `CAN_QUERY` on the VS endpoint
+This grants the app's service principal access to:
+- Unity Catalog (SELECT, EXECUTE, MODIFY on tables/functions)
+- SQL Warehouse (CAN_USE)
+- Genie Space (CAN_RUN)
+- MLflow Experiment (CAN_MANAGE)
+
+**After Vector Search is ready**, also grant the VS endpoint permission. The script prints the exact command at the end — run it.
+
+### Done!
+
+Open the app URL printed by the install script (or find it in Workspace → Apps).
+
+**Test it:**
+1. Select an applicant and application from the dropdowns
+2. Click **"Analyze Application"** — the AI agent analyzes using all 3 tools
+3. Review the AI recommendation
+4. Click **Approve / Deny / Approve with Changes**
+5. Check **Decision History** (click Refresh)
 
 ---
 
-## What the Customer Needs to Change
+## Changing the LLM Model
 
-| Item | Where | What to change |
-|------|-------|----------------|
-| **CLI profile** | `.env` | `DATABRICKS_CONFIG_PROFILE=<your-profile>` |
-| **Catalog** | `.env` | `UC_CATALOG=<your-catalog>` |
-| **Schema** | `.env` | `UC_SCHEMA=<your-schema>` (default: `underwriting_demo`) |
-| **Warehouse ID** | `.env` | `DATABRICKS_SQL_WAREHOUSE_ID=<your-warehouse-id>` |
-| **Workspace host** | `databricks.yml` | Under `targets.dev.workspace.host` and `targets.prod.workspace.host` |
-| **App name** | `databricks.yml` | Under `resources.apps.underwriting_agent.name` (if you want a different name) |
-| **VS endpoint** | `.env` | `VS_ENDPOINT=<your-vs-endpoint-name>` (if different) |
-| **VS index** | `.env` | `VS_INDEX=<catalog>.<schema>.rag_idx` |
-| **Model** | `.env` | `ORCHESTRATOR_MODEL=<model-name>` (any FMAPI model) |
-| **Company name** | `.env` + `app.yaml` + `databricks.yml` | `COMPANY_NAME=<your-company>` (shown in sidebar + agent prompt) |
+The orchestrator model is configurable — set it in `databricks.yml` under `ORCHESTRATOR_MODEL`:
 
-Everything else works out of the box with the provided synthetic data.
-
----
-
-## Project Structure
-
+```yaml
+- name: ORCHESTRATOR_MODEL
+  value: "databricks-claude-sonnet-4-5"    # or any Databricks FMAPI model
 ```
-underwriting-agent/
-├── .env.example                    # <-- COPY TO .env AND CONFIGURE
-├── databricks.yml                  # DAB bundle (deploy with: databricks bundle deploy)
-├── pyproject.toml                  # Python dependencies
-├── README.md                       # This file
-│
-├── agent_server/                   # Core agent code
-│   ├── agent.py                    # Orchestrator: tools, MCP, prompt, @stream/@invoke
-│   ├── start_server.py             # FastAPI + workflow UI mount
-│   ├── utils.py                    # Auth, streaming helpers
-│   ├── workflow_api.py             # REST API: applicants, applications, decisions
-│   ├── workflow_ui.py              # Full underwriting workspace HTML
-│   └── evaluate_agent.py           # MLflow evaluation
-│
-├── demo/                           # Data setup scripts
-│   ├── install.sh                  # MASTER INSTALL — run this
-│   ├── grant_permissions.sh        # Grant app SP permissions
-│   ├── setup_underwriting_demo.sql # Tables + seed data
-│   ├── provision_stack.sql         # UC functions + rag_chunks table
-│   ├── load_rag_chunks.py          # Insert knowledge docs into rag_chunks
-│   ├── provision_genie_space.py    # Create Genie space
-│   ├── run_sql.py                  # SQL execution helper
-│   └── knowledge_docs/             # Markdown files for RAG
-│       ├── 01_india_underwriting_manual_excerpt.md
-│       ├── 02_product_guide_india.md
-│       └── 03_underwriting_checklist.md
-│
-└── scripts/                        # Local dev scripts (from template)
-    ├── start_app.py                # Run locally with frontend
-    ├── quickstart.py               # Interactive setup
-    └── ...
+
+Available models (depends on your workspace):
+- `databricks-claude-sonnet-4-5` (recommended)
+- `databricks-meta-llama-3-3-70b-instruct`
+- `databricks-gpt-5-4`
+- `databricks-llama-4-maverick`
+
+After changing, redeploy:
+```bash
+DATABRICKS_CONFIG_PROFILE=<profile> databricks bundle deploy
+DATABRICKS_CONFIG_PROFILE=<profile> databricks bundle run underwriting_agent
 ```
 
 ---
 
-## Built With
+## Troubleshooting
 
-| Component | Source |
-|-----------|--------|
-| Agent framework | [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) |
-| App template | [databricks/app-templates](https://github.com/databricks/app-templates) `agent-openai-agents-sdk-multiagent` |
-| Development toolkit | [databricks-solutions/ai-dev-kit](https://github.com/databricks-solutions/ai-dev-kit) |
-| Serving | MLflow ResponsesAgent (`@stream` / `@invoke`) |
-| Deployment | Databricks Asset Bundles (DAB) |
-| Data | Unity Catalog Delta tables, UC Functions, Genie, Vector Search |
+| Issue | Fix |
+|-------|-----|
+| `install.sh` fails at "Creating tables" | Check that your SQL warehouse is **running** and the warehouse ID is correct |
+| App deploy fails with "max limit of 1 apps" | Delete the existing app: `databricks apps delete <app-name> --profile <profile>` |
+| App deploy fails with "permission" error | Create app manually: `databricks apps create underwriting-agent --profile <profile>`, then deploy source |
+| "ENDPOINT_NOT_FOUND" error in the app | The model isn't available on your workspace. Change `ORCHESTRATOR_MODEL` in `databricks.yml` |
+| "PERMISSION_DENIED" on model endpoint | The model has a rate limit of 0. Try a different model |
+| Decision History stays blank after approving | Run `grant_permissions.sh` — the SP needs MODIFY on workspace tables |
+| Vector Search returns no results | Check the index is ONLINE and the SP has CAN_QUERY on the VS endpoint |
+| Genie returns errors | Ensure the SP has CAN_RUN on the Genie space (check via `grant_permissions.sh`) |
 
 ---
 
@@ -316,6 +197,36 @@ underwriting-agent/
 
 ---
 
+## Project Structure
+
+```
+underwriting-agent/
+├── .env.example                    # Copy to .env and configure
+├── databricks.yml                  # DAB bundle config (edit # CHANGE lines)
+├── app.yaml                        # Fallback config for manual deploy
+├── pyproject.toml                  # Python dependencies
+│
+├── agent_server/                   # Core agent code
+│   ├── agent.py                    # Orchestrator: tools, MCP, prompt
+│   ├── start_server.py             # FastAPI + workflow UI mount
+│   ├── workflow_api.py             # REST API: applicants, applications, decisions
+│   ├── workflow_ui.py              # Full underwriting workspace HTML
+│   └── evaluate_agent.py           # MLflow evaluation
+│
+├── demo/                           # Setup scripts
+│   ├── install.sh                  # MASTER INSTALL — run this
+│   ├── grant_permissions.sh        # Grant app SP all permissions
+│   ├── setup_underwriting_demo.sql # Tables + seed data
+│   ├── provision_stack.sql         # UC functions + rag_chunks table
+│   ├── load_rag_chunks.py          # Insert knowledge docs
+│   ├── provision_genie_space.py    # Create Genie space
+│   └── knowledge_docs/             # Markdown files for RAG
+│
+└── scripts/                        # Local dev utilities
+```
+
+---
+
 ## Synthetic Data Disclaimer
 
-All data in this demo is **synthetic** and generated for demonstration purposes only. No real personal information, medical records, or financial data is used. Outputs from the AI agent are **not** binding underwriting decisions.
+All data is **synthetic** — no real personal information, medical records, or financial data. AI outputs are **not** binding underwriting decisions.
