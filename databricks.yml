@@ -4,20 +4,20 @@ bundle:
 # ── CUSTOMER: change these defaults to match your workspace ──────────────────
 variables:
   catalog:
-    default: "serverless_stable_tcrn2v_catalog"   # CHANGE: your UC catalog
+    default: ""                                    # CHANGE: your UC catalog
   schema:
     default: "underwriting_demo"
   warehouse_id:
-    default: "91dbe14a27ddabad"                    # CHANGE: your SQL warehouse ID
+    default: ""                                    # CHANGE: your SQL warehouse ID
   genie_space_id:
-    default: "01f125d0813316d8adac3002ca0f0658"    # CHANGE: after running demo/install.sh
+    default: ""                                    # Auto-populated by demo/install.sh
   company_name:
-    default: "India Life"                          # CHANGE: your company name
+    default: "Acme Insurance"                      # CHANGE: your company name
 
 resources:
   apps:
     underwriting_agent:
-      name: "underwriting-agent"
+      name: "underwriting-agent"                   # CHANGE: your app name
       description: "India retail life insurance underwriting assistant (multi-agent)"
       source_code_path: ./
       config:
@@ -41,11 +41,13 @@ resources:
             value: "${var.catalog}.${var.schema}.rag_idx"
           - name: COMPANY_NAME
             value: ${var.company_name}
+          - name: ORCHESTRATOR_MODEL
+            value: "databricks-claude-sonnet-4-5"  # CHANGE: any Databricks FMAPI model
 
       resources:
         - name: "experiment"
           experiment:
-            experiment_id: ""                       # CHANGE: your MLflow experiment ID
+            experiment_id: ""                      # Auto-populated by demo/install.sh
             permission: "CAN_MANAGE"
 
         - name: "genie_space"

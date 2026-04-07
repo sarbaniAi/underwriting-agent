@@ -14,7 +14,7 @@ Architecture:
                           (rag_idx on knowledge_docs volume)
 
 Data never leaves the workspace. All tables, functions, and indexes live in
-Unity Catalog under serverless_stable_tcrn2v_catalog.underwriting_demo.
+Unity Catalog under the configured catalog and schema (set via UC_CATALOG and UC_SCHEMA env vars).
 """
 
 import litellm
