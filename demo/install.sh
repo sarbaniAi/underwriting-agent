@@ -50,6 +50,30 @@ echo "Step 0: Verifying Databricks CLI auth..."
 databricks auth describe --profile "$PROFILE" 2>&1 | head -3
 echo ""
 
+# Step 0.5: Create schema if it doesn't exist
+echo "Step 0.5: Ensuring schema exists..."
+python3 -c "
+import os, json, subprocess, sys
+profile = os.environ.get('DATABRICKS_CONFIG_PROFILE', 'DEFAULT')
+catalog = os.environ['UC_CATALOG']
+schema = os.environ['UC_SCHEMA']
+warehouse = os.environ['DATABRICKS_SQL_WAREHOUSE_ID']
+stmt = f'CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}'
+result = subprocess.run(
+    ['databricks', 'api', 'post', '/api/2.0/sql/statements',
+     '--json', json.dumps({'statement': stmt, 'warehouse_id': warehouse, 'wait_timeout': '30s'}),
+     '--profile', profile],
+    capture_output=True, text=True
+)
+try:
+    d = json.loads(result.stdout)
+    state = d.get('status', {}).get('state', 'UNKNOWN')
+    print(f'  Schema {catalog}.{schema}: {state}')
+except:
+    print(f'  Schema creation output: {result.stdout[:200]}')
+"
+echo ""
+
 # Step 1: Create tables + seed data
 echo "Step 1: Creating tables and seeding data..."
 cd "$SCRIPT_DIR"
@@ -86,6 +110,21 @@ if [ -f genie_space_id.txt ]; then
     if grep -q "^GENIE_SPACE_ID=" "$PROJECT_DIR/.env"; then
         sed -i.bak "s/^GENIE_SPACE_ID=.*/GENIE_SPACE_ID=$GENIE_ID/" "$PROJECT_DIR/.env"
     fi
+    # Update databricks.yml genie_space_id variable default
+    python3 - "$PROJECT_DIR/databricks.yml" "$GENIE_ID" <<'PYEOF'
+import re, sys
+yml_path, genie_id = sys.argv[1], sys.argv[2]
+with open(yml_path, 'r') as f:
+    content = f.read()
+content = re.sub(
+    r'(genie_space_id:\s*\n\s*default:\s*)"[^"]*"',
+    rf'\1"{genie_id}"',
+    content
+)
+with open(yml_path, 'w') as f:
+    f.write(content)
+print(f'  Updated genie_space_id in databricks.yml to {genie_id}')
+PYEOF
 fi
 echo ""
 
