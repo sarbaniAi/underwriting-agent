@@ -150,7 +150,7 @@ async def search_underwriting_docs(query: str) -> str:
         result = _ws.vector_search_indexes.query_index(
             index_name=VS_INDEX,
             query_text=query,
-            columns=["content", "source_document"],
+            columns=["content", "source_path"],
             num_results=5,
         )
         if not result.result or not result.result.data_array:
@@ -161,8 +161,8 @@ async def search_underwriting_docs(query: str) -> str:
         for row in result.result.data_array:
             r = dict(zip(columns, row))
             chunks.append(r.get("content", ""))
-            if r.get("source_document"):
-                sources.add(r["source_document"])
+            if r.get("source_path"):
+                sources.add(r["source_path"])
 
         context = "\n\n---\n\n".join(chunks)
         src = ", ".join(sources) if sources else "underwriting knowledge base"
