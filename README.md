@@ -168,32 +168,7 @@ DATABRICKS_CONFIG_PROFILE=<profile> databricks bundle run underwriting_agent
 
 ## Architecture
 
-```
-                    ┌─────────────────────────────┐
-                    │   Databricks App (FastAPI)   │
-                    │  ┌───────────────────────┐  │
-   Browser ────────►│  │  Workflow UI (HTML/JS) │  │
-                    │  └───────────┬───────────┘  │
-                    │              │ /invocations  │
-                    │  ┌───────────▼───────────┐  │
-                    │  │   Orchestrator Agent   │  │
-                    │  │  (OpenAI Agents SDK)   │  │
-                    │  └──┬──────┬──────┬──────┘  │
-                    └─────┼──────┼──────┼─────────┘
-                          │      │      │
-              ┌───────────┘      │      └───────────┐
-              ▼                  ▼                  ▼
-     ┌────────────┐    ┌────────────┐    ┌────────────┐
-     │ Genie MCP  │    │UC Functions│    │Vector Search│
-     │ (Structured│    │ (Business  │    │   (RAG /    │
-     │   data)    │    │   rules)   │    │   docs)     │
-     └─────┬──────┘    └─────┬──────┘    └─────┬──────┘
-           │                 │                 │
-     ┌─────▼─────────────────▼─────────────────▼──────┐
-     │              Unity Catalog                      │
-     │  Delta tables │ UC Functions │ Volumes │ VS idx │
-     └────────────────────────────────────────────────┘
-```
+![AI-Assisted Underwriting — Multi-Agent Architecture on Databricks](architecture_hires.png)
 
 ---
 
