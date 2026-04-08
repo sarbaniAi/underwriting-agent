@@ -4,6 +4,8 @@ AI-assisted underwriting workflow for retail life insurance, built on Databricks
 
 ## What It Does
 
+![AI-Assisted Underwriting — Multi-Agent Architecture on Databricks](architecture_hires.png)
+
 An orchestrator agent routes underwriting queries to 3 backends:
 
 | Tool | Backend | Use Case |
