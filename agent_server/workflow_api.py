@@ -16,9 +16,9 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/api")
 
-CATALOG = os.environ.get("UC_CATALOG", "serverless_stable_tcrn2v_catalog")
+CATALOG = os.environ.get("UC_CATALOG", "my_catalog")
 SCHEMA = os.environ.get("UC_SCHEMA", "underwriting_demo")
-WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "91dbe14a27ddabad")
+WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "")
 COMPANY_NAME = os.environ.get("COMPANY_NAME", "India Life")
 
 _ws = WorkspaceClient()

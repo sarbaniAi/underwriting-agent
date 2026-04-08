@@ -46,11 +46,11 @@ from agent_server.utils import (
 # Configuration (from environment / .env)
 # ---------------------------------------------------------------------------
 
-CATALOG = os.environ.get("UC_CATALOG", "serverless_stable_tcrn2v_catalog")
+CATALOG = os.environ.get("UC_CATALOG", "my_catalog")
 SCHEMA = os.environ.get("UC_SCHEMA", "underwriting_demo")
-GENIE_SPACE_ID = os.environ.get("GENIE_SPACE_ID", "01f125d0813316d8adac3002ca0f0658")
+GENIE_SPACE_ID = os.environ.get("GENIE_SPACE_ID", "")
 VS_INDEX = os.environ.get("VS_INDEX", f"{CATALOG}.{SCHEMA}.rag_idx")
-WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "91dbe14a27ddabad")
+WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "")
 MODEL = os.environ.get("ORCHESTRATOR_MODEL", "databricks-claude-sonnet-4-5")
 COMPANY_NAME = os.environ.get("COMPANY_NAME", "India Life")
 
