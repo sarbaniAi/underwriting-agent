@@ -11,3 +11,4 @@ e2e-chatbot-app-next/
 demo/genie_space_id.txt
 .bundle/
 .databricks/
+*.bak
